@@ -84,6 +84,17 @@ const TRACKS = [
    until the whole bank has been seen (then a new "mastery lap" begins). */
 const BANK = Array.isArray(window.QUESTION_BANK) ? window.QUESTION_BANK : [];
 
+/* Bank stems/options were authored with HTML entities (&lt;form&gt; etc.) for
+   innerHTML rendering; the flashcard now uses textContent, so decode once. */
+(() => {
+  const ta = document.createElement("textarea");
+  const dec = (s) => {
+    if (typeof s !== "string" || s.indexOf("&") === -1) return s;
+    ta.innerHTML = s; return ta.value;
+  };
+  BANK.forEach(q => { q.q = dec(q.q); q.opts = q.opts.map(dec); });
+})();
+
 function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function shuffleArr(arr, rng){ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
@@ -291,17 +302,30 @@ const Audio = {
     if (!this.built) return;
     this.track = track;
     this.indexHits(track);
-    this.step = 0;
     this.wants = true;
     this.stopAt = null;
     this.onAutoStop = null;
     if (this.loopId !== null) { try { Tone.Transport.clear(this.loopId); } catch (e) {} }
     this.loopId = null;
+    /* Bar-aligned clean start: only ever called when the TRACK actually
+       changes (or after a stop) — never per answer, so the groove never
+       hitches mid-playback. */
+    Tone.Transport.stop();
+    Tone.Transport.cancel(0);
     Tone.Transport.bpm.value = track.bpm;
+    try { Tone.Transport.position = "0:0:0"; } catch (e) {}
 
     this.loopId = Tone.Transport.scheduleRepeat((time) => {
-      const s = this.step % 16;
-      this.step++;
+      /* Tick-exact step from the scheduled event time: cannot drift even if
+         a scheduler callback fires late after tab-suspend/resume. */
+      let s;
+      if (Tone.Transport.getTicksAtTime) {
+        const ppq = Tone.Transport.PPQ || 480;
+        s = Math.floor(Tone.Transport.getTicksAtTime(time) / (ppq / 4)) % 16;
+      } else {
+        this.step = (this.step + 1) % 16; s = this.step;
+      }
+      this._lastStep = s;
       const t = this.track;
       if (!t) return;
 
@@ -335,7 +359,9 @@ const Audio = {
 
   /* Schedule a visual flash roughly when the note is heard. */
   pulse(layerKey, when) {
-    const delay = Math.max(0, (when - Tone.now()) * 1000);
+    /* Clamp: after a suspend/resume, (when - now) can be huge and the
+       queued setTimeouts would burst-flash; 300 ms covers normal lookahead. */
+    const delay = Math.min(300, Math.max(0, (when - Tone.now()) * 1000));
     setTimeout(() => flashBar(layerKey), delay);
   },
 
@@ -532,16 +558,14 @@ async function handleAnswer(choiceIdx, btn) {
     setBarActive(layerKey, true);
     renderProgress();
 
-    if (audioOK) {
+    if (audioOK || Audio.built) {
+      /* Game owns the transport. But if the SAME track is already playing,
+         leave the groove untouched — new layers simply join on their next
+         pattern hit. (Previously every correct answer reloaded the track,
+         which jolted the beat mid-bar: the "inconsistent music".) */
       Audio.mode = "game";
       Audio.muted = {}; Audio.solo = {};
-      Audio.playTrack(game.track);   /* game always owns the transport — also steals back from library play */
-    } else if (Audio.built && window.Tone) {
-      /* Context still locked, but voices exist: schedule anyway so the
-         watchdog + next tap bring the music in without losing the beat. */
-      Audio.mode = "game";
-      Audio.muted = {}; Audio.solo = {};
-      Audio.playTrack(game.track);
+      if (Audio.track !== game.track || !Audio.isPlaying()) Audio.playTrack(game.track);
     }
 
     setTimeout(() => {
@@ -760,7 +784,8 @@ async function toggleTransport() {
     if (Audio.mode === "library") {
       Audio.mode = "game";
       Audio.muted = {}; Audio.solo = {};
-      Audio.playTrack(game.track);
+      if (Audio.track !== game.track) Audio.playTrack(game.track); /* steal back, fresh bar */
+      else Audio.resume();                                          /* already the game track: just resume */
     } else {
       Audio.resume();
     }
