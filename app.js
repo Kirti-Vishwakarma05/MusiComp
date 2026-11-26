@@ -134,23 +134,39 @@ function beatQuestions() {
 
 /* ---------------- Persistence (localStorage) ---------------- */
 const LS_KEY = "musicomp_state_v1";
-
+/* Platform-independent storage: iOS private mode, Safari "block all
+   cookies", old WebKit sandboxes and file:// in some browsers can THROW
+   on localStorage. Degrade to an in-memory store instead of crashing. */
+const store = {
+  mem: {},
+  get(k) {
+    try { return localStorage.getItem(k); }
+    catch (e) { return Object.prototype.hasOwnProperty.call(this.mem, k) ? this.mem[k] : null; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, v); }
+    catch (e) { this.mem[k] = v; }
+  },
+};
 function defaultState() {
-  return { streak: 0, lastDate: null, mixtape: [], cursor: 0, lap: 0, lastBonusStreak: null }; // mixtape: [{trackId, date, bonus?}]
+  return { streak: 0, lastDate: null, mixtape: [], cursor: 0, lap: 0, lastBonusStreak: null,
+           beatDate: null, beatsToday: 0 }; // mixtape: [{trackId, date, bonus?}]
 }
 function loadState() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = store.get(LS_KEY);
     if (!raw) return defaultState();
     const s = JSON.parse(raw);
     if (typeof s.streak !== "number" || !Array.isArray(s.mixtape)) return defaultState();
     if (typeof s.cursor !== "number" || s.cursor < 0) s.cursor = 0;
     if (typeof s.lap !== "number") s.lap = 0;
+    if (typeof s.beatsToday !== "number" || s.beatsToday < 0) s.beatsToday = 0;
+    if (typeof s.beatDate !== "string") s.beatDate = null;
     return s;
   } catch (e) { return defaultState(); }
 }
 function saveState() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+  store.set(LS_KEY, JSON.stringify(state));
 }
 let state = loadState();
 
@@ -169,6 +185,13 @@ function todayTrackIndex() {
   const start = new Date(now.getFullYear(), 0, 0);
   const doy = Math.floor((now - start) / 86400000);
   return doy % 7;
+}
+/* BEAT ROTATION: the calendar day SEEDS the 7-track catalog, and every
+   completed beat rolls to the NEXT track — so back-to-back practice never
+   feels "stuck on one day". Persists across reloads via state.beatsToday. */
+function rotationIndex() {
+  if (state.beatDate !== TODAY) { state.beatDate = TODAY; state.beatsToday = 0; }
+  return (todayTrackIndex() + (state.beatsToday | 0)) % 7;
 }
 
 /* ---------------- Audio engine (Tone.js) ----------------
@@ -495,6 +518,12 @@ const game = {
 };
 
 function newSession() {
+  /* Roll to the rotated beat for this practice session (see rotationIndex). */
+  game.trackIndex = rotationIndex();
+  game.track = TRACKS[game.trackIndex];
+  el.trackTitle.textContent = game.track.name;
+  el.trackMeta.innerHTML =
+    `${game.track.genre} <span class="bpm-dot">\u25CF</span> ${game.track.bpm} BPM <span class="bpm-dot">\u25CF</span> 5 layers to unlock \u00B7 ${BANK.length.toLocaleString()}-card bank`;
   game.queue = beatQuestions();
   game.current = null;
   game.unlocked = 0;
@@ -503,7 +532,7 @@ function newSession() {
   Audio.resetFlags();
   LAYERS.forEach(l => setBarActive(l.key, false));
   renderProgress();
-  el.dayLabel.textContent = `Track of the Day \u00B7 Set #${setNumber()} of the bank`;
+  el.dayLabel.textContent = `Beat Rotation \u00B7 Day ${game.trackIndex + 1}/7 \u00B7 Set #${setNumber()} of the bank`;
   updateBankInfo();
   nextQuestion();
 }
@@ -618,6 +647,13 @@ function completeTrack() {
   state.cursor += 5;
   saveState();
 
+  /* This set is done: the NEXT session rolls to the next day of the 7-track
+     rotation, so repeated practice visibly progresses instead of repeating
+     the same "day". (The calendar streak is separate and grows tomorrow.) */
+  state.beatDate = TODAY;
+  state.beatsToday = (state.beatsToday | 0) + 1;
+  saveState();
+
   const alreadyToday = state.mixtape.some(m => m.trackId === game.trackIndex && m.date === TODAY);
 
   if (!alreadyToday) {
@@ -646,14 +682,15 @@ function completeTrack() {
 
   el.completeTrackName.textContent = game.track.name;
   el.streakLine.innerHTML = alreadyToday
-    ? `Bonus beat! Streak already counted today: <b>${state.streak}</b> day${state.streak === 1 ? "" : "s"}`
+    ? `Beat recorded! Streak stays at <b>${state.streak}</b> today \u2014 finish a beat tomorrow to grow it to Day ${state.streak + 1}`
     : `Streak: <b>${state.streak}</b> day${state.streak === 1 ? "" : "s"} \u2022 saved to your Mixtape Library`;
   if (bonusEligible) el.streakLine.innerHTML += ' \u2022 <b class="sakura">&#127880; Anime bonus beat unlocked!</b>';
   el.cassetteDay.textContent = String(game.trackIndex + 1);
   el.quizArea.classList.add("hidden");
   el.doneBanner.classList.remove("hidden");
-  el.doneSub.textContent = "Next set: 5 fresh cards from the " + BANK.length.toLocaleString() +
-    "-question fundamentals bank" + (alreadyToday ? " (streak counts once per day)" : "") + ".";
+  const nextIdx = rotationIndex();   /* beatsToday already incremented: the beat you'll get next */
+  el.doneSub.textContent = "Next beat: \u201C" + TRACKS[nextIdx].name + "\u201D (Day " + (nextIdx + 1) +
+    "/7) \u00B7 5 fresh cards from the " + BANK.length.toLocaleString() + "-question bank.";
 
   show(el.completeModal);
   spawnConfetti();
@@ -972,10 +1009,10 @@ function boot() {
   /* Resume the exact card order of the saved mastery lap. */
   if ((state.lap || 0) !== 0) DECK = buildDeck(BANK, state.lap);
 
-  game.trackIndex = todayTrackIndex();
+  game.trackIndex = rotationIndex();
   game.track = TRACKS[game.trackIndex];
 
-  el.dayLabel.textContent = `Track of the Day \u00B7 Set #${setNumber()} of the bank`;
+  el.dayLabel.textContent = `Beat Rotation \u00B7 Day ${game.trackIndex + 1}/7 \u00B7 Set #${setNumber()} of the bank`;
   el.trackTitle.textContent = game.track.name;
   el.trackMeta.innerHTML =
     `${game.track.genre} <span class="bpm-dot">\u25CF</span> ${game.track.bpm} BPM <span class="bpm-dot">\u25CF</span> 5 layers to unlock \u00B7 ${BANK.length.toLocaleString()}-card bank`;

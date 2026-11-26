@@ -1,0 +1,19 @@
+{
+  "name": "Musicomp — Daily Code Beats",
+  "short_name": "Musicomp",
+  "description": "Answer daily CS fundamentals from a 1,000+ question bank to unlock the 5 layers of a brand-new beat. Build streaks. Collect mixtapes.",
+  "id": "./",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0a0e16",
+  "theme_color": "#0a0e16",
+  "categories": ["education", "games", "music"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

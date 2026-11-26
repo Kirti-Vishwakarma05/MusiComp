@@ -679,3 +679,17 @@ body {
   .btn-transport { align-self: flex-end; }
   .vbar .vlabel { letter-spacing: 0.05em; }
 }
+
+/* ===== Cross-platform polish ===== */
+/* No 300ms tap delay, no double-tap-to-zoom lag in the quiz grid */
+html { touch-action: manipulation; }
+button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+/* iPhone notch / Android gesture bars: keep the studio chrome inside the safe area */
+.topbar { padding-left: max(clamp(0.9rem, 4vw, 2rem), env(safe-area-inset-left)); padding-right: max(clamp(0.9rem, 4vw, 2rem), env(safe-area-inset-right)); }
+.wrap { padding-bottom: calc(3rem + env(safe-area-inset-bottom)); }
+.overlay { padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+.toast { bottom: calc(1.4rem + env(safe-area-inset-bottom)); }
+/* iOS Safari ignores some scroll styling; keep modals from rubber-band leaking */
+.modal { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* Firefox scrollbar */
+* { scrollbar-color: #2a3245 #0d1220; }
