@@ -84,8 +84,10 @@ const TRACKS = [
 /* ---------------- Question bank: 1000+ fundamentals ----------------
    questions.js exposes window.QUESTION_BANK (flat array of {cat,q,opts,a}).
    Beats draw 5 consecutive cards from a category-interleaved deck, so every
-   beat mixes 5 different topics. state.cursor persists: no card repeats
-   until the whole bank has been seen (then a new "mastery lap" begins). */
+   beat mixes 5 different topics. Round 7: the deck is unseen-first, rebuilt
+   against state.seen at every beat start — a mastered card NEVER returns
+   (except as review once all 1,059 are mastered, or right after a mistake,
+   where the same card loops back within the unfinished beat). */
 const BANK = Array.isArray(window.QUESTION_BANK) ? window.QUESTION_BANK : [];
 
 /* Bank stems/options were authored with HTML entities (&lt;form&gt; etc.) for
@@ -108,7 +110,13 @@ function shuffleArr(arr, rng){ for (let i=arr.length-1;i>0;i--){ const j=Math.fl
 /* Round 6: seed includes TODAY's date key, so every calendar day gets a
    freshly shuffled (and therefore unique) run of 5-question sets —
    no more "same 5 questions every day". Within one day the order is stable. */
-function buildDeck(bank, lap, day){
+/* Round 7: NO-REPEAT GUARANTEE. The deck is built from every card and then
+   split: not-yet-mastered cards first, mastered cards only as an "review"
+   tail after the whole bank has been answered. So the same question never
+   comes back — unless the user made a mistake (in-beat shuffled retry), or
+   the bank is fully exhausted and a mastery-lap review begins. The date salt
+   keeps each calendar day's NEW cards in a fresh order. */
+function buildDeck(bank, lap, day, seen){
   const groups = {};
   bank.forEach((q, i) => { (groups[q.cat] = groups[q.cat] || []).push(i); });
   const keys = Object.keys(groups);
@@ -117,25 +125,48 @@ function buildDeck(bank, lap, day){
   const order = [];
   while (order.length < bank.length)
     keys.forEach(k => { if (groups[k].length) order.push(groups[k].shift()); });
-  return order;
+  if (!seen) return order;
+  const fresh = [], review = [];
+  order.forEach(i => (seen[i] ? review : fresh).push(i));
+  return fresh.concat(review);
+}
+function unseenCount(){
+  return BANK.length - Object.keys(state.seen || {}).length;
 }
 let DECK = [];   /* seeded below, once TODAY/state exist */
 
-function setNumber() { return Math.floor(state.cursor / 5) + 1; }
+/* setNumber counts completed sets (Round 7: the old deck cursor was
+   replaced by the unseen-first queue + a completed-sets counter). */
+function setNumber() { return (state.setsDone | 0) + 1; }
 
+/* Round 7 queue model: DECK is [all unseen in day-salted order] +
+   [all mastered review cards]. A beat ALWAYS takes its 5 cards from the
+   unseen front — mastered cards can only re-enter when fewer than 5 unseen
+   remain (topped up from the rotating review tail). So:
+     * same question never repeats after a correct answer;
+     * mistakes loop the card back WITHIN the beat only (shuffled retry);
+     * quitting mid-beat resumes the same unfinished cards (they're still
+       unseen and sit at the front — minus the ones you already got right). */
 function beatQuestions() {
   if (!BANK.length) return [];
-  /* Start the next mastery lap as soon as fewer than 5 cards remain,
-     so every beat is a full 5-layer unlock. */
-  if (state.cursor + 5 > DECK.length) {
-    state.cursor = 0;
-    state.lap = (state.lap || 0) + 1;
-    DECK = buildDeck(BANK, state.lap, TODAY); /* fresh order each lap + day */
-    saveState();
-    toast("Full bank mastered \u2014 starting mastery lap " + (state.lap + 1) + " \uD83C\uDFB5");
-  }
+  DECK = buildDeck(BANK, state.lap || 0, dateKey(new Date()), state.seen);
+  const freshN = unseenCount();
   const idx = [];
-  for (let i = 0; i < 5; i++) idx.push(DECK[state.cursor + i]);
+  const take = Math.min(5, freshN);
+  for (let i = 0; i < take; i++) idx.push(DECK[i]);
+  const revLen = DECK.length - freshN;
+  if (revLen > 0) {
+    for (let k = 0; k < 5 - take; k++) idx.push(DECK[freshN + ((state.reviewCursor | 0) + k) % revLen]);
+    state.reviewCursor = ((state.reviewCursor | 0) + (5 - take)) % revLen;
+  }
+  if (take === 0 && revLen > 0 && !state.lapNotified) {
+    state.lap = (state.lap || 0) + 1;
+    state.lapNotified = true;
+    toast("Full bank mastered \u2014 starting mastery lap " + (state.lap + 1) + " \uD83C\uDFB5");
+  } else if (take > 0 && state.lapNotified) {
+    state.lapNotified = false; /* new unseen cards exist again (fresh device/lap state) */
+  }
+  saveState();
   return idx.map(i => Object.assign({ retried: false, bid: i }, BANK[i]));
 }
 
@@ -164,7 +195,10 @@ function defaultState() {
            correct: 0,        // total correct answers
            bestStreak: 0,     // longest streak ever held
            name: "",          // profile display name
-           created: null };   // join date YYYY-MM-DD
+           created: null,     // join date YYYY-MM-DD
+           setsDone: 0,       // completed 5-card sets (lifetime)
+           reviewCursor: 0,   // rotation point inside the review tail
+           lapNotified: false };// lap toast already fired for exhausted bank
   // mixtape: [{trackId, date, bonus?}]
 }
 function loadState() {
@@ -213,7 +247,7 @@ function rotationIndex() {
   return (todayTrackIndex() + (state.beatsToday | 0)) % 7;
 }
 /* Seed the day's deck order now that state + TODAY exist (module order). */
-DECK = buildDeck(BANK, state.lap || 0, TODAY);
+DECK = buildDeck(BANK, state.lap || 0, TODAY, state.seen);
 
 /* ---------------- Audio engine (Tone.js) ----------------
    All 5 layers are synthesized on one shared Tone.Transport clock.
@@ -717,8 +751,9 @@ async function handleAnswer(choiceIdx, btn) {
 function completeTrack() {
   game.done = true;
 
-  /* The 5 cards of this beat are now permanently consumed from the deck. */
-  state.cursor += 5;
+  /* The 5 cards of this beat are now permanently consumed: each became
+     "mastered" when answered correctly, so they left the unseen queue. */
+  state.setsDone = (state.setsDone | 0) + 1;
   saveState();
 
   /* This set is done: the NEXT session rolls to the next day of the 7-track
@@ -789,9 +824,12 @@ function spawnConfetti() {
 function updateBankInfo() {
   const n = document.getElementById("bankInfo");
   if (!n) return;
-  const seen = state.lap * BANK.length + Math.min(state.cursor, BANK.length);
-  n.textContent = BANK.length.toLocaleString() + "-question bank \u00B7 " + seen.toLocaleString() +
-    " cards seen" + (state.lap ? " \u00B7 mastery lap " + (state.lap + 1) : "");
+  const mastered = Object.keys(state.seen || {}).length;
+  const fresh = BANK.length - mastered;
+  n.textContent = BANK.length.toLocaleString() + "-question bank \u00B7 " +
+    mastered.toLocaleString() + " mastered \u00B7 " +
+    (fresh > 0 ? fresh.toLocaleString() + " fresh cards left — no repeats"
+               : "bank exhausted — review rotation");
 }
 
 /* ---------------- Mixtape Library ---------------- */
@@ -1133,7 +1171,7 @@ function renderProfile() {
   el.profName.value = state.name || "";
   el.profSince.textContent = "Member since " + (state.created || TODAY) +
     " \u00B7 saved on this device";
-  const beats = Math.floor((state.cursor | 0) / 5);
+  const beats = state.setsDone | 0;
   const acc = state.answered ? Math.round(100 * (state.correct | 0) / state.answered) : 0;
   const mastered = vaultSeenIds().length;
   const stats = [
@@ -1220,7 +1258,7 @@ function boot() {
     return;
   }
   /* Resume the exact card order of the saved mastery lap. */
-  if ((state.lap || 0) !== 0) DECK = buildDeck(BANK, state.lap, TODAY);
+  if ((state.lap || 0) !== 0) DECK = buildDeck(BANK, state.lap, TODAY, state.seen);
   if (typeof state.created !== "string" || !state.created) { state.created = TODAY; saveState(); }
 
   game.trackIndex = rotationIndex();
@@ -1245,3 +1283,4 @@ function boot() {
 }
 boot();
   BANK.forEach(q => { if (typeof q.e === "string") q.e = dec(q.e); });
+function setNumberOld_unused() {}

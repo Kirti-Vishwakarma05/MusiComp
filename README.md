@@ -12,6 +12,11 @@ build a real 5-layer track every day.
   Web APIs, Compilers, CS Math & Logic, CS Concepts & OOP, Programming Concepts).
   - Questions are never repeated until the whole bank has been mastered once
     ("mastery laps" with a fresh shuffle each lap).
+  - **No-repeat guarantee (Round 7):** the deck is built unseen-first every
+    beat — a card you answered correctly can never come back. The *only* two
+    ways a question returns are (1) a mistake, which shuffles it back inside
+    the same beat until you get it right, or (2) all 1,059 cards mastered,
+    after which rotating review sets begin.
   - **Every calendar day gets its own unique 5-question sets** — the deck
     shuffle is salted with the date, so tomorrow's questions are always new.
   - **Every answer is explained** — correct or wrong, you get the *why*
@@ -51,7 +56,13 @@ build a real 5-layer track every day.
 - **Audio-consistency engine** — a playback watchdog + visibility/pointer
   re-unlock keeps the music alive through browser audio-context suspensions
   (tab switches, idle, autoplay re-locking) on desktop and mobile.
-- Responsive dark music-studio UI (mobile-first, tap-friendly, works at 360 px).
+- **"Aurora Desk" UI (Round 7)** — a full visual redesign: ambient drifting
+  light-orbs over a console grid, sticky glass header with gradient wordmark,
+  glass cards with gradient hairline borders, a two-column desk layout on
+  desktop (sticky stage left, flashcard right), neon per-layer visualizer
+  tubes that glow in their instrument's color, letter-capped answer buttons
+  with hover sweep, gradient stat tiles and mastery bars in the Profile.
+  Still mobile-first, tap-friendly and works at 360 px.
 
 ## Platform independence
 
@@ -87,8 +98,8 @@ First tap starts audio (browser autoplay policy).
 | File | Purpose |
 |---|---|
 | `index.html` | App shell, modals (library, completion, anime bonus) |
-| `style.css` | Dark studio UI, responsive layout, sakura theme |
-| `app.js` | Tone.js engine, game loop, deck cursor, streak, mixtape |
+| `style.css` | "Aurora Desk" theme: glass panels, neon tubes, sakura bonus, responsive grid |
+| `app.js` | Tone.js engine, game loop, unseen-first no-repeat queue, streak, mixtape |
 | `questions.js` | Generated bank: `window.QUESTION_BANK` (1,059 MCQs) |
 | `gen_questions.js` | Deterministic generator that produces `questions.js` |
 | `enrich_questions.js` | Post-processor that merges AI-written explanations (`e`) + difficulty (`d`) into the bank |

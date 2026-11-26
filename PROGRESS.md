@@ -1,4 +1,52 @@
 # Musicomp — build progress (2026-11-26)
+## Round 7 (current, IN PROGRESS at ~23:11 IST)
+User asks: (A) "same question should NEVER repeat unless a mistake happens";
+(B) "change the page layout to a more attractive one".
+A (CODE DONE, needs browser verify): UNSEEN-FIRST QUEUE.
+- buildDeck(bank, lap, day, seen): base round-robin order (date-salted), then
+  split fresh(unseen)+review(seen) concat. unseenCount() helper.
+- beatQuestions(): rebuild DECK with dateKey(new Date())+state.seen EVERY beat;
+  take = min(5, freshN) from DECK front; if <5 top up from review tail via
+  rotating state.reviewCursor; when take===0 first time -> lap++ + toast +
+  lapNotified flag. Cursor fully REMOVED (grep state.cursor = 0 hits).
+- state v1 new fields: setsDone (completed sets), reviewCursor, lapNotified
+  (added to defaultState; loadState migrates via default-keys loop).
+- setNumber()=setsDone+1; completeTrack sets state.setsDone++; profile
+  "beats completed"=setsDone; bankInfo shows mastered + fresh left.
+- Guarantees: mastered card never returns; mistake -> in-beat shuffle-back
+  only; quit mid-beat -> unfinished cards stay at unseen front.
+B (CODE DONE, needs browser verify): FULL style.css REWRITE "Aurora Desk":
+  glass topbar w/ gradient underline; rainbow brand text; orb bg (body::before/
+  ::after drift) + grid overlay (html::before); .wrap GRID 1-col, 2-col
+  (stage sticky left, quiz right) at min-width 920px; gradient-border cards
+  (::before mask trick); neon visualizer tubes (per-layer --lc via data-layer,
+  active glow + breathe, .fill flash keeps JS inline-height API: 14/26% base,
+  .fill.flash box-shadow); gradient key caps .ans w/ sweep hover, popSmall;
+  .feedback.explain panel (left-border currentColor; .explain.good/.bad);
+  chip[data-cat] all 18 incl Web APIs/Prog Concepts/SWE; mixtape item cards;
+  cassette spinning reels + glow; bonus sakura timer; vault v-card glass +
+  diff pills d1/d2/d3 + correct li gradient; profile conic avatar halo +
+  gradient stat numerals + mastery bars glow; toast pill; reduced-motion.
+  color-mix() used with graceful degradation. sw CACHE -> musicomp-v7.
+VERIFIED (all green, v8 cache):
+- Desktop 937px: 2-col desk grid, sticky stage, per-layer neon tubes,
+  single-col answers ≥920 (media query scoped 620-919px for 2-col). Console
+  clean (Tone banner + my evals only).
+- No-repeat sim: seen=5 -> draw [83,997,353,439,586], STABLE across calls
+  (mid-beat resume = same unfinished cards); front-10 with 200 fake-mastered
+  had ZERO mastered; unseen-first split proven in buildDeck.
+- E2E full beat (Play->5 correct A,D,D,B,A): explanation panels render,
+  tubes+ldots light 1..5, completion modal + confetti + cassette, setsDone
+  0->1, seen 5->10, mixtape 3, vault 10, footer "10 mastered · 1,049 fresh".
+  Next draw [631,682,1011,809,834] overlap with mastered = []. reviewCursor
+  0, lapNotified false (untouched while fresh>=5 — correct).
+- Vault + Profile in new CSS: glass cards, diff pills, ✓ highlight, avatar
+  halo, 8 stat tiles (Beats completed 1), mastery bars — all styled.
+sw CACHE now musicomp-v8 (round-7 release).
+NOTE R6 HEAD: pushed 6a0b53f (explanations 1059/1059 e, d 396/647/16, vault,
+profile, soft beats, cache v6). Working tree = 6a0b53f + uncommitted R7 edits
+(app.js, style.css, sw.js only so far).
+
 ## Round 6 (current, in progress)
 User asks: daily-unique questions + explanations, Subject Vault libraries
 (basic→advanced), profile w/ progress, softer "neural network" beats, keep
