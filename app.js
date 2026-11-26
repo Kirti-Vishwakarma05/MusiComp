@@ -190,6 +190,7 @@ const Audio = {
   wants: false,         // user intends music to be playing (watchdog enforces it)
   stopAt: null,         // Date.now() deadline for auto-stop (60s anime bonus beat)
   onAutoStop: null,     // callback fired when the deadline passes
+  preview: false,       // Play-button full-track preview (cleared by first answer)
 
   resetFlags() {
     LAYERS.forEach(l => { this.active[l.key] = false; this.muted[l.key] = false; this.solo[l.key] = false; });
@@ -278,7 +279,11 @@ const Audio = {
     lead.volume.value = -10; lead.connect(leadGain);
 
     this.synth = { kick, hat, bass, chords, lead };
-    this.resetFlags();
+    /* NOTE: do NOT resetFlags() here. build() runs lazily inside ensure(),
+       which can happen *after* selectLibraryTrack() has already armed all
+       5 layers on a fresh page: wiping the flags made "Play full beat" a
+       silent phantom playback (transport ran, nothing audible). Fresh
+       state is already the { } defaults, which read as "off". */
     this.built = true;
     if (!this._watchdog) this._watchdog = setInterval(() => this.tick(), 900);
   },
@@ -548,6 +553,14 @@ async function handleAnswer(choiceIdx, btn) {
   buttons.forEach(b => (b.disabled = true));
 
   if (choiceIdx === q.a) {
+    /* A full-track preview from the Play button never outlives a CORRECT
+       answer: drop it here so layers join one-by-one from this moment.
+       (Wrong answers keep the preview playing — nothing dies silently.) */
+    const wasPreview = Audio.preview;
+    if (wasPreview) {
+      Audio.preview = false;
+      LAYERS.forEach(l => { Audio.active[l.key] = false; setBarActive(l.key, false); });
+    }
     btn.classList.add("correct");
     el.feedback.textContent = "Correct! Next layer armed\u2026";
     el.feedback.classList.add("good");
@@ -565,7 +578,9 @@ async function handleAnswer(choiceIdx, btn) {
          which jolted the beat mid-bar: the "inconsistent music".) */
       Audio.mode = "game";
       Audio.muted = {}; Audio.solo = {};
-      if (Audio.track !== game.track || !Audio.isPlaying()) Audio.playTrack(game.track);
+      if (Audio.track !== game.track || !Audio.isPlaying() || (wasPreview && game.unlocked === 1)) {
+        Audio.playTrack(game.track);
+      }
     }
 
     setTimeout(() => {
@@ -574,6 +589,7 @@ async function handleAnswer(choiceIdx, btn) {
       else nextQuestion();
     }, 750);
   } else {
+    /* Wrong: preview (if any) simply keeps running; nothing to clean. */
     btn.classList.add("wrong");
     buttons[q.a] && buttons[q.a].classList.add("reveal"); // brief correct-answer tease
     el.feedback.textContent = "Not quite — that question goes back in the shuffle.";
@@ -754,6 +770,10 @@ async function playerPlay() {
   const ok = await Audio.ensure();
   if (!ok && !Audio.built) return;   /* locked context: still schedule; watchdog + next tap bring sound */
   Audio.mode = "library";
+  /* The library player always performs the FULL saved beat: re-arm every
+     layer right here too, so first-play-after-reload can never end up
+     silent even if selection happened before the engine existed. */
+  LAYERS.forEach(l => (Audio.active[l.key] = true));
   Audio.playTrack(TRACKS[libSelected]);
   syncLayerRows();
   updateLibraryPlayLabel();
@@ -778,8 +798,16 @@ async function toggleTransport() {
   if (Audio.isPlaying()) {
     Audio.pause();
   } else if (game.unlocked === 0) {
-    toast("Answer a question to arm your first layer!");
-    return;
+    /* "Play today's track" before answering anything: instead of a dead
+       toast, preview the FULL daily track now (the library player can do
+       this too, so refusing felt broken). Answering demobilises the
+       preview back to the staged unlock flow (see handleAnswer). */
+    Audio.mode = "game";
+    Audio.muted = {}; Audio.solo = {};
+    Audio.preview = true;
+    LAYERS.forEach(l => { Audio.active[l.key] = true; setBarActive(l.key, true); });
+    Audio.playTrack(game.track);
+    toast("Previewing the full beat \u2014 answer to build it layer by layer! \uD83C\uDFB5");
   } else {
     if (Audio.mode === "library") {
       Audio.mode = "game";
@@ -957,8 +985,12 @@ function boot() {
 
   /* With a 1,000+ card bank the daily beat can be replayed all day long:
      every completed set advances the shared deck cursor; the streak and the
-     mixtape entry are still granted only once per calendar date. */
+  mixtape entry are still granted only once per calendar date. */
   newSession();
+
+  /* The static markup starts labelled "Stop" — reflect reality so the
+     button honestly reads "Play" until music is actually running. */
+  setTransportUI(Audio.isPlaying());
 }
 
 boot();
