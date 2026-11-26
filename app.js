@@ -260,72 +260,72 @@ const Audio = {
        built to soothe — mellow triangle -> gentle lowpass -> slow vibrato ->
        darkened 4th-note echo, all fed through a master warmth filter at a
        lower ceiling. Same 5-layer API, entirely new timbre. */
-    const master = new Tone.Gain(0.85).toDestination();
-    /* Master "warmth" shelf: trims the brittle top the old bank was famous for. */
-    const warmth = new Tone.Filter({ type: "lowpass", frequency: 5600, Q: 0.2 });
+    const master = new Tone.Gain(0.72).toDestination();
+    /* Master "warmth" shelf: pass 2 pulled the brittle top down hard (5.6k -> 3.4k). */
+    const warmth = new Tone.Filter({ type: "lowpass", frequency: 3400, Q: 0.2 });
     warmth.connect(master);
-    const limiter = new Tone.Limiter(-5).connect(warmth);   // softer ceiling than before
+    const limiter = new Tone.Limiter(-9).connect(warmth);   // softer ceiling than before
 
     // 1. Kick — rounder membrane: slower pitch drop, fewer overtones, more body
     const kick = new Tone.MembraneSynth({
-      pitchDecay: 0.08, octaves: 3.5,
+      pitchDecay: 0.11, octaves: 2.8,
       oscillator: { type: "sine" },
       envelope: { attack: 0.004, decay: 0.5, sustain: 0, release: 0.25 },
     });
-    kick.volume.value = -6; kick.connect(limiter);
+    kick.volume.value = -9; kick.connect(limiter);
 
     // 2. Hi-Hat — PINK noise in a narrow, dark band: air without the sizzle
-    const hatGain = new Tone.Gain(0.3).connect(limiter);
-    const hatLP = new Tone.Filter(8800, "lowpass").connect(hatGain);
-    const hatHP = new Tone.Filter(4800, "highpass").connect(hatLP);
+    const hatGain = new Tone.Gain(0.2).connect(limiter);
+    const hatLP = new Tone.Filter(6200, "lowpass").connect(hatGain);
+    const hatHP = new Tone.Filter(3600, "highpass").connect(hatLP);
     const hat = new Tone.NoiseSynth({
       noise: { type: "pink" },
-      envelope: { attack: 0.002, decay: 0.035, sustain: 0, release: 0.012 },
+      envelope: { attack: 0.008, decay: 0.03, sustain: 0, release: 0.02 },
     });
-    hat.volume.value = -13; hat.connect(hatHP);
+    hat.volume.value = -17; hat.connect(hatHP);
 
     // 3. Bass — soft saw under a mellow lowpass; filter punch turned down
-    const bassFilter = new Tone.Filter(430, "lowpass").connect(limiter);
+    const bassFilter = new Tone.Filter(320, "lowpass").connect(limiter);
     bassFilter.Q.value = 0.7;
     const bass = new Tone.MonoSynth({
       oscillator: { type: "sawtooth" },
       envelope: { attack: 0.02, decay: 0.25, sustain: 0.45, release: 0.25 },
-      filterEnvelope: { attack: 0.03, decay: 0.25, sustain: 0.4, release: 0.3, baseFrequency: 80, octaves: 1.6 },
+      filterEnvelope: { attack: 0.06, decay: 0.25, sustain: 0.4, release: 0.3, baseFrequency: 70, octaves: 1.1 },
     });
-    bass.volume.value = -8; bass.connect(bassFilter);
+    bass.volume.value = -10; bass.connect(bassFilter);
 
     // 4. Chords — warm FM "pillow" pad (no more detuned-saw buzz) + bigger reverb
-    const chordReverb = new Tone.Reverb({ decay: 3.2, preDelay: 0.02, wet: 0.4 }).connect(limiter);
-    const chordGain = new Tone.Gain(0.8);
+    const chordReverb = new Tone.Reverb({ decay: 3.6, preDelay: 0.03, wet: 0.5 }).connect(limiter);
+    const chordGain = new Tone.Gain(0.66);
     chordGain.connect(limiter); chordGain.connect(chordReverb);
     const chords = new Tone.PolySynth(Tone.FMSynth, {
       maxPolyphony: 6,
-      harmonicity: 2, modulationIndex: 2.2,
+      harmonicity: 2, modulationIndex: 1.4,
       oscillator: { type: "sine" },
-      envelope: { attack: 0.09, decay: 0.5, sustain: 0.32, release: 1.1 },
+      envelope: { attack: 0.16, decay: 0.5, sustain: 0.32, release: 1.4 },
       modulation: { type: "triangle" },
       modulationEnvelope: { attack: 0.12, decay: 0.4, sustain: 0.2, release: 0.6 },
     });
-    chords.volume.value = -18; chords.connect(chordGain);
+    chords.volume.value = -20; chords.connect(chordGain);
 
     // 5. Lead — the SOOTHE chain: mellow triangle through a rounded lowpass,
     //    a slow light vibrato for warmth, longer attack & release so notes
     //    glide in instead of poking, and a darkened quarter-note echo that
     //    sits behind the note like space rather than repetition.
-    const leadFilter = new Tone.Filter(2700, "lowpass");
+    const leadFilter = new Tone.Filter(1900, "lowpass");
     leadFilter.Q.value = 0.4;
-    const leadVib = new Tone.Vibrato({ frequency: 4.2, depth: 0.08, type: "sine" });
-    const leadGain = new Tone.Gain(0.95);
+    const leadVib = new Tone.Vibrato({ frequency: 3.8, depth: 0.06, type: "sine" });
+    const leadGain = new Tone.Gain(0.85);
     leadGain.connect(limiter);
-    const echo = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.2, maxDelay: 1.2 });
-    const echoDamp = new Tone.Filter(2400, "lowpass");   // repeats are duller than the dry note
+    const echo = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.26, maxDelay: 1.2 });
+    const echoDamp = new Tone.Filter(1600, "lowpass");   // repeats are duller than the dry note
     echo.connect(echoDamp); echoDamp.connect(limiter);
     leadGain.connect(echo);
     const lead = new Tone.Synth({
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.09, decay: 0.35, sustain: 0.5, release: 0.9 },
+      envelope: { attack: 0.14, decay: 0.35, sustain: 0.5, release: 1.2 },
     });
-    lead.volume.value = -11;
+    lead.volume.value = -14;
     lead.chain(leadFilter, leadVib, leadGain);
 
     this.synth = { kick, hat, bass, chords, lead };
@@ -385,26 +385,26 @@ const Audio = {
       if (!t) return;
 
       if (this.audible("kick") && LAYER_HITS.kick.has(s)) {
-        this.synth.kick.triggerAttackRelease("C1", "8n", time, 0.9);
+        this.synth.kick.triggerAttackRelease("C1", "8n", time, 0.8);
         this.pulse("kick", time);
       }
       if (this.audible("hat")) {
         if (LAYER_HITS.hat.has(s)) {
-          this.synth.hat.triggerAttackRelease("16n", time, 0.75);
+          this.synth.hat.triggerAttackRelease("16n", time, 0.55);
           this.pulse("hat", time);
         }
       }
       if (this.audible("bass")) {
         const hit = t.bass.find(h => h[0] === s);
-        if (hit) { this.synth.bass.triggerAttackRelease(hit[1], hit[2] || "16n", time, 0.9); this.pulse("bass", time); }
+        if (hit) { this.synth.bass.triggerAttackRelease(hit[1], hit[2] || "16n", time, 0.8); this.pulse("bass", time); }
       }
       if (this.audible("chords")) {
         const hit = t.chords.find(h => h[0] === s);
-        if (hit) { this.synth.chords.triggerAttackRelease(hit[1], hit[2] || "2n", time, 0.8); this.pulse("chords", time); }
+        if (hit) { this.synth.chords.triggerAttackRelease(hit[1], hit[2] || "2n", time, 0.65); this.pulse("chords", time); }
       }
       if (this.audible("lead")) {
         const hit = t.lead.find(h => h[0] === s);
-        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.8); this.pulse("lead", time); }
+        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.65); this.pulse("lead", time); }
       }
     }, "16n");
 
