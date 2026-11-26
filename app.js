@@ -312,20 +312,25 @@ const Audio = {
     //    a slow light vibrato for warmth, longer attack & release so notes
     //    glide in instead of poking, and a darkened quarter-note echo that
     //    sits behind the note like space rather than repetition.
-    const leadFilter = new Tone.Filter(1900, "lowpass");
+    /* Pass 3 (lead only): even rounder — LP 1.4k, slower deeper swell,
+       gentler vibrato, quieter overall, and the echo's wet mix finally set
+       to 0.35 (Tone defaults FeedbackDelay wet to 1.0 — the lead had been
+       running almost entirely through the delay tail: that was the residual
+       harshness Kirti kept hearing). */
+    const leadFilter = new Tone.Filter(1400, "lowpass");
     leadFilter.Q.value = 0.4;
-    const leadVib = new Tone.Vibrato({ frequency: 3.8, depth: 0.06, type: "sine" });
-    const leadGain = new Tone.Gain(0.85);
+    const leadVib = new Tone.Vibrato({ frequency: 3.2, depth: 0.045, type: "sine" });
+    const leadGain = new Tone.Gain(0.7);
     leadGain.connect(limiter);
-    const echo = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.26, maxDelay: 1.2 });
-    const echoDamp = new Tone.Filter(1600, "lowpass");   // repeats are duller than the dry note
+    const echo = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.22, maxDelay: 1.2, wet: 0.35 });
+    const echoDamp = new Tone.Filter(1100, "lowpass");   // repeats are duller than the dry note
     echo.connect(echoDamp); echoDamp.connect(limiter);
     leadGain.connect(echo);
     const lead = new Tone.Synth({
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.14, decay: 0.35, sustain: 0.5, release: 1.2 },
+      envelope: { attack: 0.2, decay: 0.45, sustain: 0.45, release: 1.6 },
     });
-    lead.volume.value = -14;
+    lead.volume.value = -16;
     lead.chain(leadFilter, leadVib, leadGain);
 
     this.synth = { kick, hat, bass, chords, lead };
@@ -404,7 +409,7 @@ const Audio = {
       }
       if (this.audible("lead")) {
         const hit = t.lead.find(h => h[0] === s);
-        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.65); this.pulse("lead", time); }
+        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.5); this.pulse("lead", time); }
       }
     }, "16n");
 

@@ -1,7 +1,7 @@
 /* Musicomp service worker — offline app shell.
  * Cache-first for versioned assets, network-first for navigations with an
  * offline fallback to the cached index.html. Bump CACHE on every release. */
-const CACHE = "musicomp-v4";
+const CACHE = "musicomp-v5";
 const SHELL = [
   "./",
   "index.html",
