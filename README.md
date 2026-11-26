@@ -12,15 +12,31 @@ build a real 5-layer track every day.
   Web APIs, Compilers, CS Math & Logic, CS Concepts & OOP, Programming Concepts).
   - Questions are never repeated until the whole bank has been mastered once
     ("mastery laps" with a fresh shuffle each lap).
+  - **Every calendar day gets its own unique 5-question sets** — the deck
+    shuffle is salted with the date, so tomorrow's questions are always new.
+  - **Every answer is explained** — correct or wrong, you get the *why*
+    (and, on a miss, the right answer) before the next card.
+  - Each card is tagged **Basic / Intermediate / Advanced**.
   - Each beat draws 5 cards from 5 *different* categories.
   - Wrong answers get a **Shuffled Retry** badge and are re-inserted randomly
     into the queue before the track can be finished.
+- **Subject Vault** — a personal library *per subject*, just like the Mixtape
+  Library is for beats. Every question you answer correctly is filed there with
+  its explanation and the correct option highlighted, sorted basic → advanced.
+- **Profile** — name, member-since date, current & best streak, beats
+  completed, mixtapes, answers given, accuracy, cards mastered, mastery laps,
+  and per-subject mastery bars. All progress persists in `localStorage`.
 - **5-layer live beat builder** — Kick, Hi-Hat, Bass, Synth Chords, Lead Melody,
   all synthesized in real time with [Tone.js](https://tonejs.github.io/) on one
   shared transport clock. Zero audio files. Each correct answer unmutes the next
   layer and lights its visualizer bar.
 - **7-day rotating track catalog** — a different genre every day (Synthwave,
-  Funk, Chiptune, House, Lo-Fi, Trap, Future Bass).
+  Funk, Chiptune, House, Lo-Fi, Trap, Future Bass). → now **7 soft focus beats
+  tuned for deep work / "neural sessions"**: *Delta Drift* (Ambient, 62 BPM),
+  *Theta Bloom* (Downtempo, 68), *Paper Rain* (Lo-Fi Study, 72), *Slow Orbit*
+  (Mellow Techno, 76), *Aurora Idle* (Dream Chill, 66), *Synth Rain*
+  (Downtempo Electronica, 80), *Deep Focus* (Minimal Brainwave, 84) — sparse
+  kicks, quiet hats, long warm chord swells and gentle low-register leads.
   - **Beat rotation:** the calendar day seeds the rotation, and every completed
     beat rolls you to the *next* track — so back-to-back practice always shows
     progress ("Day 3/7 · Retro Arcade") instead of repeating one day. The
@@ -75,6 +91,7 @@ First tap starts audio (browser autoplay policy).
 | `app.js` | Tone.js engine, game loop, deck cursor, streak, mixtape |
 | `questions.js` | Generated bank: `window.QUESTION_BANK` (1,059 MCQs) |
 | `gen_questions.js` | Deterministic generator that produces `questions.js` |
+| `enrich_questions.js` | Post-processor that merges AI-written explanations (`e`) + difficulty (`d`) into the bank |
 | `vendor/tone.min.js` | Bundled Tone.js 14.8.49 (offline-first, CDN fallback) |
 | `sw.js` / `manifest.webmanifest` / `icons/` | PWA offline shell + install icons |
 | `make_icons.py` | Regenerates the PWA icons (needs Pillow) |

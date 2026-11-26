@@ -40,6 +40,13 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6Zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2Zm-8 12.5v-6l5 3-5 3Z"/></svg>
         <span class="lib-label">Mixtape Library</span> <span class="count-badge" id="libCount">0</span>
       </button>
+      <button class="btn btn-vault" id="btnVault" title="Subject Vault — saved questions with answers &amp; explanations">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 1 8l11 5 11-5-11-5Zm-9 9.18V18l9 4 9-4v-5.82l-9 4.09-9-4.09Z"/></svg>
+        <span class="vault-label">Subject Vault</span> <span class="count-badge" id="vaultCount">0</span>
+      </button>
+      <button class="btn btn-profile" id="btnProfile" aria-label="Profile" title="Profile &amp; progress">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -154,6 +161,40 @@
   </div>
 
   <div class="toast hidden" id="toast"></div>
+
+  <!-- ===== Subject Vault modal (saved questions per subject) ===== -->
+  <div class="overlay hidden" id="vaultModal" role="dialog" aria-modal="true" aria-label="Subject Vault">
+    <div class="modal modal-vault">
+      <div class="modal-head">
+        <h3>Subject Vault</h3>
+        <button class="btn btn-icon" id="btnCloseVault" aria-label="Close vault">&#10005;</button>
+      </div>
+      <p class="vault-hint">Every question you've mastered is filed here by subject — sorted <b>basic &rarr; advanced</b>, with the correct answer highlighted and the explanation.</p>
+      <div class="vault-chips" id="vaultChips"></div>
+      <div class="vault-list" id="vaultList"></div>
+    </div>
+  </div>
+
+  <!-- ===== Profile modal (saved progress) ===== -->
+  <div class="overlay hidden" id="profileModal" role="dialog" aria-modal="true" aria-label="Profile">
+    <div class="modal modal-profile">
+      <div class="modal-head">
+        <h3>Profile</h3>
+        <button class="btn btn-icon" id="btnCloseProfile" aria-label="Close profile">&#10005;</button>
+      </div>
+      <div class="prof-top">
+        <div class="prof-avatar" id="profAvatar">?</div>
+        <div class="prof-id">
+          <input class="prof-name" id="profName" maxlength="24" placeholder="Add your name" autocomplete="off">
+          <p class="prof-since" id="profSince"></p>
+        </div>
+      </div>
+      <div class="prof-grid" id="profStats"></div>
+      <h4 class="prof-sub">Subject mastery</h4>
+      <div class="prof-mastery" id="profMastery"></div>
+      <p class="prof-note">Progress is saved on this device (localStorage) — same place as your Mixtape Library.</p>
+    </div>
+  </div>
 
   <!-- Platform independence: bundled Tone.js runs offline, from file://, or
        behind ad-blockers that eat CDNs; the CDN is only a fallback. -->

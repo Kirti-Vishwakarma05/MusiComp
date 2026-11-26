@@ -16,55 +16,59 @@ const LAYERS = [
 
 /* Each pattern loop is 1 bar = 16 sixteenth-note steps.
    bass:  [step, note, dur?]   chords: [step, [notes], dur]   lead: [step, note, dur?] */
+/* Round 6: the daily rotation is a set of SOFT focus beats — slow tempos
+   (62-84 BPM), sparse kicks/hats, long warm chord swells and gentle,
+   low-register lead phrases, chosen to sit quietly under studying
+   ("best for neural networks" mode). Sakura Finale (id 7) is untouched. */
 const TRACKS = [
-  { id: 0, name: "Neon Pulse",     genre: "Synthwave",   bpm: 104,
+  { id: 0, name: "Delta Drift",    genre: "Ambient Focus",  bpm: 62,
     kick: [0, 8],
-    hat:  [0, 2, 4, 6, 8, 10, 12, 14],
-    bass: [[0,"A1","16n"],[3,"A1","16n"],[6,"C2","16n"],[8,"A1","16n"],[11,"A1","16n"],[14,"G1","16n"]],
+    hat:  [4, 12],
+    bass: [[0,"A1","2n"],[8,"F1","2n"]],
     chords: [[0,["A3","C4","E4"],"2n"],[8,["F3","A3","C4"],"2n"]],
-    lead: [[2,"E5","8n"],[5,"C5","8n"],[7,"D5","8n"],[10,"B4","8n"],[12,"A4","8n"],[15,"C5","8n"]] },
+    lead: [[2,"A4","4n"],[10,"E5","4n"]] },
 
-  { id: 1, name: "Midnight Funk",  genre: "Funk",        bpm: 98,
-    kick: [0, 7, 10],
-    hat:  [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-    bass: [[0,"E1","16n"],[3,"E2","16n"],[6,"D2","16n"],[8,"G1","16n"],[11,"B1","16n"],[14,"D2","16n"]],
-    chords: [[4,["E3","G3","B3"],"16n"],[10,["G3","B3","D4"],"16n"]],
-    lead: [[2,"G4","8n"],[5,"B4","8n"],[9,"E4","8n"],[12,"G4","8n"]] },
-
-  { id: 2, name: "Retro Arcade",   genre: "Chiptune",    bpm: 132,
-    kick: [0, 4, 8, 12],
-    hat:  [2, 6, 10, 14],
-    bass: [[0,"C2","16n"],[2,"C2","16n"],[4,"G1","16n"],[6,"G1","16n"],[8,"A1","16n"],[10,"A1","16n"],[12,"F1","16n"],[14,"F1","16n"]],
-    chords: [[0,["C4","E4","G4"],"2n"],[8,["A3","C4","E4"],"2n"]],
-    lead: [[0,"C5","16n"],[2,"E5","16n"],[4,"G5","16n"],[6,"E5","16n"],[8,"A5","16n"],[10,"G5","16n"],[12,"E5","16n"],[14,"D5","16n"]] },
-
-  { id: 3, name: "Deep Circuit",   genre: "House",       bpm: 126,
-    kick: [0, 4, 8, 12],
-    hat:  [2, 6, 10, 14],
-    bass: [[0,"F1","16n"],[3,"F1","16n"],[6,"A#1","16n"],[8,"F1","16n"],[11,"D#2","16n"],[14,"C2","16n"]],
-    chords: [[0,["F3","A#3","C4"],"2n"],[8,["D#3","G3","A#3"],"2n"]],
-    lead: [[4,"C4","8n"],[7,"F4","8n"],[10,"A#4","8n"],[13,"G4","8n"]] },
-
-  { id: 4, name: "Lo-Fi Groove",   genre: "Lo-Fi Hip-Hop", bpm: 82,
-    kick: [0, 6, 10],
-    hat:  [0, 3, 6, 8, 11, 14],
-    bass: [[0,"D1","8n"],[6,"D1","16n"],[10,"A1","8n"]],
-    chords: [[2,["D3","F3","A3","C4"],"2d"],[10,["G3","A#3","D4","F4"],"2d"]],
-    lead: [[4,"A4","8n"],[12,"F4","8n"],[14,"G4","8n"]] },
-
-  { id: 5, name: "Trap Cascade",   genre: "Trap",        bpm: 140,
-    kick: [0, 7, 10],
-    hat:  [0,2,3,4,6,8,10,11,12,14,15],
-    bass: [[0,"G1","8n"],[4,"G1","16n"],[7,"A#1","8n"],[10,"D2","16n"]],
-    chords: [[0,["G3","A#3","D4"],"2n"]],
-    lead: [[2,"D5","16n"],[3,"A#4","16n"],[6,"D5","16n"],[8,"F5","8n"],[11,"D5","16n"],[14,"C5","8n"]] },
-
-  { id: 6, name: "Future Bass Drop", genre: "Future Bass", bpm: 150,
+  { id: 1, name: "Theta Bloom",    genre: "Downtempo",      bpm: 68,
     kick: [0, 10],
-    hat:  [0, 2, 4, 6, 8, 10, 12, 14],
-    bass: [[0,"A#1","8n"],[10,"F1","16n"]],
-    chords: [[0,["A#3","D4","F4"],"2n"],[8,["G3","A#3","D4"],"2n"],[12,["F3","A3","C4"],"4n"]],
-    lead: [[0,"D5","16n"],[3,"F5","16n"],[6,"A#5","16n"],[8,"A5","8n"],[11,"F5","16n"],[13,"D5","16n"]] },
+    hat:  [2, 6, 10, 14],
+    bass: [[0,"D1","4n"],[8,"A#1","4n"]],
+    chords: [[0,["D3","F3","A3"],"2n"],[8,["A#2","D3","F3"],"2n"]],
+    lead: [[4,"A4","8n"],[12,"F4","8n"]] },
+
+  { id: 2, name: "Paper Rain",     genre: "Lo-Fi Study",    bpm: 72,
+    kick: [0, 7, 10],
+    hat:  [0, 3, 6, 8, 11, 14],
+    bass: [[0,"G1","4n"],[8,"D1","4n"]],
+    chords: [[2,["G3","A#3","D4"],"2d"],[10,["D3","F3","A3"],"2d"]],
+    lead: [[4,"D5","8n"],[12,"A#4","8n"]] },
+
+  { id: 3, name: "Slow Orbit",     genre: "Mellow Techno",  bpm: 76,
+    kick: [0, 8],
+    hat:  [4, 12],
+    bass: [[0,"C2","8n"],[3,"C2","16n"],[8,"G1","8n"],[11,"G1","16n"]],
+    chords: [[0,["C4","E4","G4"],"2n"],[8,["A3","D4","E4"],"2n"]],
+    lead: [[6,"E5","4n"],[14,"D5","4n"]] },
+
+  { id: 4, name: "Aurora Idle",    genre: "Dream Chill",    bpm: 66,
+    kick: [0, 8],
+    hat:  [2, 6, 10, 14],
+    bass: [[0,"E1","2n"],[8,"C2","2n"]],
+    chords: [[0,["E3","G3","B3"],"2n"],[8,["C3","E3","G3"],"2n"]],
+    lead: [[3,"B4","8n"],[7,"G4","8n"],[11,"E4","8n"],[14,"G4","8n"]] },
+
+  { id: 5, name: "Synth Rain",     genre: "Downtempo Electronica", bpm: 80,
+    kick: [0, 6, 10],
+    hat:  [0, 4, 8, 12],
+    bass: [[0,"A1","8n"],[4,"A1","16n"],[8,"E2","8n"],[12,"G1","16n"]],
+    chords: [[0,["A3","C4","E4"],"2n"],[8,["E3","G3","A#3"],"2n"]],
+    lead: [[5,"C5","8n"],[9,"A#4","8n"],[13,"G4","4n"]] },
+
+  { id: 6, name: "Deep Focus",     genre: "Minimal Brainwave", bpm: 84,
+    kick: [0, 8],
+    hat:  [4, 12],
+    bass: [[0,"F1","4n"],[4,"F1","16n"],[8,"C2","4n"],[12,"C2","16n"]],
+    chords: [[0,["F3","A3","C4"],"2n"],[8,["C3","E3","G3"],"2n"]],
+    lead: [[2,"A4","8n"],[6,"C5","8n"],[10,"G4","8n"],[14,"A4","8n"]] },
 
   /* id 7 — reserved bonus track: NEVER appears in the daily 7-day rotation.
      Plays for exactly 60s as the 7-day-streak anime reward (and from the library). */
@@ -101,18 +105,21 @@ function shuffleArr(arr, rng){ for (let i=arr.length-1;i>0;i--){ const j=Math.fl
 
 /* Round-robin interleave by category: consecutive cards never share a topic
    (while more than one category still has cards left in the rotation). */
-function buildDeck(bank, lap){
+/* Round 6: seed includes TODAY's date key, so every calendar day gets a
+   freshly shuffled (and therefore unique) run of 5-question sets —
+   no more "same 5 questions every day". Within one day the order is stable. */
+function buildDeck(bank, lap, day){
   const groups = {};
   bank.forEach((q, i) => { (groups[q.cat] = groups[q.cat] || []).push(i); });
   const keys = Object.keys(groups);
-  const rng = mulberry32(hashStr("deck|lap" + lap));
+  const rng = mulberry32(hashStr("deck|lap" + lap + "|day" + (day || "x")));
   keys.forEach(k => shuffleArr(groups[k], rng));
   const order = [];
   while (order.length < bank.length)
     keys.forEach(k => { if (groups[k].length) order.push(groups[k].shift()); });
   return order;
 }
-let DECK = buildDeck(BANK, 0);
+let DECK = [];   /* seeded below, once TODAY/state exist */
 
 function setNumber() { return Math.floor(state.cursor / 5) + 1; }
 
@@ -123,13 +130,13 @@ function beatQuestions() {
   if (state.cursor + 5 > DECK.length) {
     state.cursor = 0;
     state.lap = (state.lap || 0) + 1;
-    DECK = buildDeck(BANK, state.lap); /* fresh order each mastery lap */
+    DECK = buildDeck(BANK, state.lap, TODAY); /* fresh order each lap + day */
     saveState();
     toast("Full bank mastered \u2014 starting mastery lap " + (state.lap + 1) + " \uD83C\uDFB5");
   }
   const idx = [];
   for (let i = 0; i < 5; i++) idx.push(DECK[state.cursor + i]);
-  return idx.map(i => Object.assign({ retried: false }, BANK[i]));
+  return idx.map(i => Object.assign({ retried: false, bid: i }, BANK[i]));
 }
 
 /* ---------------- Persistence (localStorage) ---------------- */
@@ -150,7 +157,15 @@ const store = {
 };
 function defaultState() {
   return { streak: 0, lastDate: null, mixtape: [], cursor: 0, lap: 0, lastBonusStreak: null,
-           beatDate: null, beatsToday: 0 }; // mixtape: [{trackId, date, bonus?}]
+           beatDate: null, beatsToday: 0,
+           /* Round 6 fields */
+           seen: {},          // {bankIndex: 1} once answered correctly -> Subject Vault ✓
+           answered: 0,       // total answers given (incl. retries)
+           correct: 0,        // total correct answers
+           bestStreak: 0,     // longest streak ever held
+           name: "",          // profile display name
+           created: null };   // join date YYYY-MM-DD
+  // mixtape: [{trackId, date, bonus?}]
 }
 function loadState() {
   try {
@@ -162,6 +177,10 @@ function loadState() {
     if (typeof s.lap !== "number") s.lap = 0;
     if (typeof s.beatsToday !== "number" || s.beatsToday < 0) s.beatsToday = 0;
     if (typeof s.beatDate !== "string") s.beatDate = null;
+    /* Migrate older saves that predate the round-6 fields. */
+    const d = defaultState();
+    Object.keys(d).forEach(k => { if (s[k] === undefined) s[k] = d[k]; });
+    if (typeof s.bestStreak === "number" && s.bestStreak < s.streak) s.bestStreak = s.streak;
     return s;
   } catch (e) { return defaultState(); }
 }
@@ -193,6 +212,8 @@ function rotationIndex() {
   if (state.beatDate !== TODAY) { state.beatDate = TODAY; state.beatsToday = 0; }
   return (todayTrackIndex() + (state.beatsToday | 0)) % 7;
 }
+/* Seed the day's deck order now that state + TODAY exist (module order). */
+DECK = buildDeck(BANK, state.lap || 0, TODAY);
 
 /* ---------------- Audio engine (Tone.js) ----------------
    All 5 layers are synthesized on one shared Tone.Transport clock.
@@ -490,6 +511,12 @@ const el = {
   bonusModal: $("#bonusModal"), btnBonusPlay: $("#btnBonusPlay"),
   btnBonusStop: $("#btnBonusStop"), btnBonusClose: $("#btnBonusClose"),
   bonusCount: $("#bonusCount"), bonusFill: $("#bonusFill"), bonusNote: $("#bonusNote"),
+  /* Round 6: Subject Vault + Profile */
+  btnVault: $("#btnVault"), vaultModal: $("#vaultModal"), vaultChips: $("#vaultChips"),
+  vaultList: $("#vaultList"), vaultCount: $("#vaultCount"), btnCloseVault: $("#btnCloseVault"),
+  btnProfile: $("#btnProfile"), profileModal: $("#profileModal"), btnCloseProfile: $("#btnCloseProfile"),
+  profAvatar: $("#profAvatar"), profName: $("#profName"), profSince: $("#profSince"),
+  profStats: $("#profStats"), profMastery: $("#profMastery"),
 };
 
 /* ---------------- Visualizer ---------------- */
@@ -578,7 +605,8 @@ function nextQuestion() {
 function renderQuestion() {
   const q = game.current;
   if (!q) return;
-  el.qCategory.textContent = q.cat;
+  /* Round 6: difficulty chip beside the subject (basic -> advanced). */
+  el.qCategory.textContent = q.cat + (q.d ? "  \u00B7  " + ["", "Basic", "Intermediate", "Advanced"][q.d] : "");
   el.qCategory.dataset.cat = q.cat;
   el.retryBadge.classList.toggle("hidden", !q.retried);
   el.qCount.textContent = `Set #${setNumber()} · Q${5 - game.queue.length} / 5`;
@@ -623,8 +651,16 @@ async function handleAnswer(choiceIdx, btn) {
       LAYERS.forEach(l => { Audio.active[l.key] = false; setBarActive(l.key, false); });
     }
     btn.classList.add("correct");
-    el.feedback.textContent = "Correct! Next layer armed\u2026";
+    /* Round 6: explain the answer right in the feedback line. */
+    state.answered = (state.answered | 0) + 1;
+    state.correct = (state.correct | 0) + 1;
+    if (q.bid != null) state.seen[q.bid] = 1;
+    saveState();
+    el.feedback.textContent = q.e
+      ? "Correct! " + q.e
+      : "Correct! Next layer armed\u2026";
     el.feedback.classList.add("good");
+    if (q.e) el.feedback.classList.add("explain");
 
     game.unlocked++;
     const layerKey = LAYERS[game.unlocked - 1].key;
@@ -648,13 +684,19 @@ async function handleAnswer(choiceIdx, btn) {
       game.busy = false;
       if (game.unlocked >= 5) completeTrack();
       else nextQuestion();
-    }, 750);
+    }, q.e ? 2100 : 750);
   } else {
     /* Wrong: preview (if any) simply keeps running; nothing to clean. */
     btn.classList.add("wrong");
     buttons[q.a] && buttons[q.a].classList.add("reveal"); // brief correct-answer tease
-    el.feedback.textContent = "Not quite — that question goes back in the shuffle.";
+    /* Round 6: teach even on misses — answer + why, before the shuffle-back. */
+    state.answered = (state.answered | 0) + 1;
+    saveState();
+    el.feedback.textContent = q.e
+      ? "Answer: " + q.opts[q.a] + " \u2014 " + q.e
+      : "Not quite \u2014 that question goes back in the shuffle.";
     el.feedback.classList.add("bad");
+    if (q.e) el.feedback.classList.add("explain");
     el.flashcard.classList.add("shake");
     setTimeout(() => el.flashcard.classList.remove("shake"), 450);
 
@@ -667,7 +709,7 @@ async function handleAnswer(choiceIdx, btn) {
       buttons.forEach(b => b.classList.remove("reveal"));
       game.busy = false;
       nextQuestion();
-    }, 1100);
+    }, q.e ? 2400 : 1100);
   }
 }
 
@@ -694,6 +736,7 @@ function completeTrack() {
     else if (state.lastDate !== TODAY) state.streak = 1;
     state.lastDate = TODAY;
     state.mixtape.push({ trackId: game.trackIndex, date: TODAY });
+    if ((state.bestStreak | 0) < state.streak) state.bestStreak = state.streak;
     saveState();
     el.streakChip.classList.remove("bump");
     void el.streakChip.offsetWidth;
@@ -757,6 +800,7 @@ let libSelected = null; // trackId currently shown in player
 function refreshHeader() {
   el.streakCount.textContent = state.streak;
   el.libCount.textContent = state.mixtape.length;
+  if (el.vaultCount) el.vaultCount.textContent = Object.keys(state.seen || {}).length;
 }
 
 function renderLibrary() {
@@ -1008,11 +1052,148 @@ el.btnBonusClose.addEventListener("click", closeBonusBeat);
 [el.libraryModal, el.completeModal].forEach(m =>
   m.addEventListener("click", (e) => { if (e.target === m) hide(m); })
 );
+
+/* ---------------- Subject Vault (round 6) ----------------
+   Questions you've answered correctly are filed here by subject, each with
+   the correct option highlighted, the explanation, and a difficulty badge.
+   Sorted basic -> advanced inside every subject. All built via textContent
+   (bank stems contain literal <tag> characters). */
+let vaultCat = "all";
+const DIFF_LABEL = ["", "Basic", "Intermediate", "Advanced"];
+
+function vaultSeenIds() {
+  const seen = state.seen || {};
+  return Object.keys(seen).map(Number).filter(i => BANK[i]);
+}
+function vaultCatCounts(ids) {
+  const counts = {};
+  ids.forEach(i => { const c = BANK[i].cat; counts[c] = (counts[c] || 0) + 1; });
+  return counts;
+}
+function mk(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function renderVault() {
+  const ids = vaultSeenIds();
+  const counts = vaultCatCounts(ids);
+  el.vaultCount.textContent = ids.length;
+
+  el.vaultChips.innerHTML = "";
+  const defs = [{ k: "all", label: "All subjects", n: ids.length }]
+    .concat(Object.keys(counts).sort().map(k => ({ k, label: k, n: counts[k] })));
+  defs.forEach(d => {
+    const b = mk("button", "v-chip" + (vaultCat === d.k ? " on" : ""));
+    b.type = "button";
+    b.textContent = d.n ? `${d.label} (${d.n})` : "";
+    if (!d.n) { b.disabled = true; b.textContent = `${d.label} (0)`; }
+    b.addEventListener("click", () => { vaultCat = d.k; renderVault(); });
+    el.vaultChips.appendChild(b);
+  });
+
+  const list = ids
+    .filter(i => vaultCat === "all" || BANK[i].cat === vaultCat)
+    .sort((x, y) => ((BANK[x].d || 2) - (BANK[y].d || 2)) || (BANK[x].q < BANK[y].q ? -1 : 1));
+  el.vaultList.innerHTML = "";
+  if (!list.length) {
+    el.vaultList.appendChild(mk("div", "vault-empty",
+      "Nothing filed yet — answer questions correctly in a beat and they land here with answers + explanations."));
+    return;
+  }
+  const shown = list.slice(0, 250); /* keep the DOM light on phones */
+  shown.forEach(i => {
+    const q = BANK[i];
+    const card = mk("div", "v-card");
+    const meta = mk("div", "v-meta");
+    const cat = mk("span", "chip", q.cat); cat.dataset.cat = q.cat;
+    meta.appendChild(cat);
+    meta.appendChild(mk("span", "v-diff d" + (q.d || 2), DIFF_LABEL[q.d] || "Intermediate"));
+    card.appendChild(meta);
+    card.appendChild(mk("p", "v-q", q.q));
+    const opts = mk("ul", "v-opts");
+    q.opts.forEach((o, j) => {
+      const li = mk("li", j === q.a ? "correct" : "", ("ABCD"[j]) + ".  " + o + (j === q.a ? "  \u2713" : ""));
+      opts.appendChild(li);
+    });
+    card.appendChild(opts);
+    if (q.e) card.appendChild(mk("p", "v-exp", "\uD83D\uDCA1 " + q.e));
+    el.vaultList.appendChild(card);
+  });
+  if (list.length > shown.length)
+    el.vaultList.appendChild(mk("p", "vault-more", `+ ${list.length - shown.length} more in this subject — filter by topic to narrow it down.`));
+}
+function openVault() { renderVault(); show(el.vaultModal); }
+
+/* ---------------- Profile (round 6) ---------------- */
+function renderProfile() {
+  const nm = (state.name || "").trim();
+  el.profAvatar.textContent = nm ? nm[0].toUpperCase() : "\u266B";
+  el.profName.value = state.name || "";
+  el.profSince.textContent = "Member since " + (state.created || TODAY) +
+    " \u00B7 saved on this device";
+  const beats = Math.floor((state.cursor | 0) / 5);
+  const acc = state.answered ? Math.round(100 * (state.correct | 0) / state.answered) : 0;
+  const mastered = vaultSeenIds().length;
+  const stats = [
+    ["Current streak", state.streak + "d"],
+    ["Best streak", (state.bestStreak | 0) + "d"],
+    ["Beats completed", String(beats)],
+    ["Mixtapes", String(state.mixtape.length)],
+    ["Answers given", String(state.answered | 0)],
+    ["Accuracy", acc + "%"],
+    ["Cards mastered", mastered + " / " + BANK.length.toLocaleString()],
+    ["Mastery laps", String(state.lap | 0)],
+  ];
+  el.profStats.innerHTML = "";
+  stats.forEach(([label, val]) => {
+    const cell = mk("div", "p-stat");
+    cell.appendChild(mk("b", null, val));
+    cell.appendChild(mk("span", null, label));
+    el.profStats.appendChild(cell);
+  });
+  const tot = {}, got = {};
+  BANK.forEach((q, i) => {
+    tot[q.cat] = (tot[q.cat] || 0) + 1;
+    if ((state.seen || {})[i]) got[q.cat] = (got[q.cat] || 0) + 1;
+  });
+  el.profMastery.innerHTML = "";
+  Object.keys(tot).sort().forEach(cat => {
+    const n = got[cat] || 0;
+    const pct = Math.round(100 * n / tot[cat]);
+    const row = mk("div", "m-row");
+    row.appendChild(mk("span", "m-name", cat));
+    const bar = mk("div", "m-bar");
+    const fill = mk("i");
+    fill.style.width = pct + "%";
+    bar.appendChild(fill);
+    row.appendChild(bar);
+    row.appendChild(mk("span", "m-num", n + "/" + tot[cat]));
+    el.profMastery.appendChild(row);
+  });
+}
+function openProfile() { renderProfile(); show(el.profileModal); }
+
+el.btnVault.addEventListener("click", openVault);
+el.btnCloseVault.addEventListener("click", () => hide(el.vaultModal));
+el.vaultModal.addEventListener("click", (e) => { if (e.target === el.vaultModal) hide(el.vaultModal); });
+el.btnProfile.addEventListener("click", openProfile);
+el.btnCloseProfile.addEventListener("click", () => hide(el.profileModal));
+el.profileModal.addEventListener("click", (e) => { if (e.target === el.profileModal) hide(el.profileModal); });
+el.profName.addEventListener("input", () => {
+  state.name = el.profName.value.slice(0, 24);
+  const nm = state.name.trim();
+  el.profAvatar.textContent = nm ? nm[0].toUpperCase() : "\u266B";
+  saveState();
+});
+
 el.bonusModal.addEventListener("click", (e) => { if (e.target === el.bonusModal) closeBonusBeat(); });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     hide(el.libraryModal); hide(el.completeModal);
     if (!el.bonusModal.classList.contains("hidden")) closeBonusBeat();
+    hide(el.vaultModal); hide(el.profileModal);
   }
 });
 
@@ -1039,7 +1220,8 @@ function boot() {
     return;
   }
   /* Resume the exact card order of the saved mastery lap. */
-  if ((state.lap || 0) !== 0) DECK = buildDeck(BANK, state.lap);
+  if ((state.lap || 0) !== 0) DECK = buildDeck(BANK, state.lap, TODAY);
+  if (typeof state.created !== "string" || !state.created) { state.created = TODAY; saveState(); }
 
   game.trackIndex = rotationIndex();
   game.track = TRACKS[game.trackIndex];
@@ -1061,5 +1243,5 @@ function boot() {
      button honestly reads "Play" until music is actually running. */
   setTransportUI(Audio.isPlaying());
 }
-
 boot();
+  BANK.forEach(q => { if (typeof q.e === "string") q.e = dec(q.e); });
