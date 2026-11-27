@@ -1,4 +1,33 @@
 # Musicomp — build progress (2026-11-26)
+## Round 8 (2026-11-27) — "beats not audible + synthcode stuck, REPLACE IT"
+- Context: task migrated to MANAGED WEBDEV project wdp_76a86f432b7c2795bb108739;
+  canonical git = Manus hosted repo (origin artifacts.cloudflare.net).
+  Permanent URL https://musicomp-qjnxu57j.manus.space (private-gated: curl
+  302s to app-auth; fine in a logged-in browser). Dev server: platform
+  dev-command `python3 -m http.server 3000 --bind 0.0.0.0`. Build cfg:
+  command copies shell into public/, outputDirectory public. Old GitHub repo
+  still exists (Kirti-Vishwakarma05/MusiComp) — mirror push each release.
+- DIAGNOSIS (browser-measured): engine itself ran (ctx running, triggers
+  fired) but OUTPUT LEVEL mush: peak -11dBFS/rms .045 with bass saw 55Hz
+  through LP 320 (inaudible on phone speakers), hats -17dB. AND sandbox
+  clock-throttle exposed Tone backlog bursts (all late events fire at once
+  on weak/throttled devices -> "stuck" feeling; iOS bg-tab worst).
+- FIX ENGINE v10: full build() rewrite (see app.js header comment): master
+  .95*vol + glue compressor -12/4; kick membrane pitchDecay .07 oct 4.2
+  -4dB; hats pink 4.8-9.5k -8dB; bass MonoSynth LP1100 + filterEnv 120Hz
+  3oct -5dB (harmonics carry); chords fixed 4-voice triangle pool w/
+  reverb 1.9s wet .28 (-12dB ea); lead triangle LP2600+Vib+echo w/in chain
+  -7dB; velocities .8-.95. STALE GUARD in scheduler: drop time < now-0.25.
+  chords facade keeps triggerAttackRelease([notes],dur,time,vel) API.
+- NEW vol slider UI: .stage-actions cluster (transport + .vol-wrap pill w/
+  range #volSlider); state.vol default 90; Audio.setMasterVolume ramps
+  gain; persists (verified: 55 -> gain .522, stored).
+- sw CACHE musicomp-v9. VERIFIED: peak -4dBFS rms -14dB, all layers
+  triggering, errs []; scripted full beat incl. a real mistake -> retry
+  resolved -> completion (setsDone 1, mixtape 1, seen 5); console clean.
+- PITFALLS LEARNED: browser_console_exec needs single-expression JS;
+  click element "index" param name; exec OSC pollution -> fresh session.
+
 ## Round 7 (current, IN PROGRESS at ~23:11 IST)
 User asks: (A) "same question should NEVER repeat unless a mistake happens";
 (B) "change the page layout to a more attractive one".

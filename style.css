@@ -322,6 +322,29 @@ button:focus-visible, input:focus-visible {
   transition: all 0.2s var(--ease-pop);
 }
 .btn-transport:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(45, 255, 179, 0.3); }
+
+/* Round 8: master volume pill next to the transport button */
+.stage-actions { flex: none; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+.vol-wrap {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--muted);
+  transition: border-color 0.2s;
+}
+.vol-wrap:hover { border-color: rgba(45, 255, 179, 0.4); }
+.vol-ico { font-size: 0.85rem; line-height: 1; }
+.vol-wrap input[type="range"] {
+  width: 84px;
+  accent-color: var(--c-lead);
+  cursor: pointer;
+}
+@media (max-width: 470px) { .vol-wrap input[type="range"] { width: 62px; } }
 .t-icon { font-size: 0.8rem; }
 .btn-transport.playing {
   border-color: rgba(255, 56, 100, 0.5);

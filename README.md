@@ -56,6 +56,17 @@ build a real 5-layer track every day.
 - **Audio-consistency engine** — a playback watchdog + visibility/pointer
   re-unlock keeps the music alive through browser audio-context suspensions
   (tab switches, idle, autoplay re-locking) on desktop and mobile.
+  - **Engine v10 "Full-Signal Focus" (Round 8)** replaced the synth bank
+    outright: it had been softened until phone/laptop speakers couldn't
+    reproduce it (55 Hz bass under a 320 Hz lid, −17 dB hats). Warmth now
+    lives in midrange *harmonics* (audible on tiny speakers), levels sit at
+    a healthy −4 dBFS peak through a glue compressor, chords run on a fixed
+    4-voice pool (no FM/PolySynth churn on mobile), and a **stale-event
+    guard** drops late scheduler backlog instead of playing the
+    post-resume "stuck/burst" artifact.
+  - **Master volume slider** next to the Play button (saved per device).
+    Tip: on iPhone the physical Silent switch also mutes WebAudio — flip it
+    off if nothing is audible.
 - **"Aurora Desk" UI (Round 7)** — a full visual redesign: ambient drifting
   light-orbs over a console grid, sticky glass header with gradient wordmark,
   glass cards with gradient hairline borders, a two-column desk layout on

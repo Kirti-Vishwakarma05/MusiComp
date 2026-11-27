@@ -197,6 +197,7 @@ function defaultState() {
            name: "",          // profile display name
            created: null,     // join date YYYY-MM-DD
            setsDone: 0,       // completed 5-card sets (lifetime)
+           vol: 90,           // master volume percent (Round 8 slider)
            reviewCursor: 0,   // rotation point inside the review tail
            lapNotified: false };// lap toast already fired for exhausted bank
   // mixtape: [{trackId, date, bonus?}]
@@ -306,96 +307,116 @@ const Audio = {
 
   build() {
     if (this.built) return;
-    /* ===== SOOTHED SYNTH BANK (v3 "no more harshness" rebuild) =====
-       The previous bank was edgy by design: buzzing fatsaw pads, white-noise
-       hats with a 7.5 kHz sizzle band, a bright echo lead and a clicky kick.
-       Kirti flagged it as disturbing, so every voice was replaced with a
-       warmer, rounder design: pink-noise hats tucked in a dark band, an FM
-       "pillow" pad, a soft-filtered bass, a thumpier kick, and a lead chain
-       built to soothe — mellow triangle -> gentle lowpass -> slow vibrato ->
-       darkened 4th-note echo, all fed through a master warmth filter at a
-       lower ceiling. Same 5-layer API, entirely new timbre. */
-    const master = new Tone.Gain(0.72).toDestination();
-    /* Master "warmth" shelf: pass 2 pulled the brittle top down hard (5.6k -> 3.4k). */
-    const warmth = new Tone.Filter({ type: "lowpass", frequency: 3400, Q: 0.2 });
-    warmth.connect(master);
-    const limiter = new Tone.Limiter(-9).connect(warmth);   // softer ceiling than before
+    /* ===== ENGINE v10 "Full-Signal Focus" rebuild (Round 8) =====
+       The previous bank was softened down four passes until it was
+       effectively inaudible on phone/laptop speakers: master .72, hats
+       -17 dB, a 55 Hz bass saw crushed by a 320 Hz lowpass (tiny speakers
+       simply cannot reproduce it), plus an FMSynth PolyPad with a 3.6 s
+       reverb IR that stalls voice allocation on mobile. This rebuild keeps
+       the soft, studious character but restores MIDRANGE HARMONICS so small
+       speakers can actually hear it, adds a glue compressor for even level,
+       a fixed 3+1-voice chord pad (no PolySynth churn = no "stuck" notes),
+       and a stale-event guard that kills post-resume backlog bursts.
+       Same 5-layer API — everything else (unlock, library, bonus) is
+       unchanged. Master volume now also follows the slider (state.vol). */
+    const v = (typeof state.vol === "number" ? state.vol : 90) / 100;
+    const master = new Tone.Gain(0.95 * v).toDestination();
+    this.master = master;
+    /* Glue compressor keeps every layer at an even, audible level instead
+       of one voice punching through while others vanish. */
+    const glue = new Tone.Compressor({ threshold: -12, knee: 20, ratio: 4,
+                                       attack: 0.004, release: 0.2 });
+    glue.connect(master);
 
-    // 1. Kick — rounder membrane: slower pitch drop, fewer overtones, more body
+    // 1. Kick — round but present: shorter pitch drop puts the punch at
+    //    ~100 Hz where small speakers still radiate.
     const kick = new Tone.MembraneSynth({
-      pitchDecay: 0.11, octaves: 2.8,
+      pitchDecay: 0.07, octaves: 4.2,
       oscillator: { type: "sine" },
-      envelope: { attack: 0.004, decay: 0.5, sustain: 0, release: 0.25 },
+      envelope: { attack: 0.002, decay: 0.32, sustain: 0, release: 0.1 },
     });
-    kick.volume.value = -9; kick.connect(limiter);
+    kick.volume.value = -4; kick.connect(glue);
 
-    // 2. Hi-Hat — PINK noise in a narrow, dark band: air without the sizzle
-    const hatGain = new Tone.Gain(0.2).connect(limiter);
-    const hatLP = new Tone.Filter(6200, "lowpass").connect(hatGain);
-    const hatHP = new Tone.Filter(3600, "highpass").connect(hatLP);
+    // 2. Hi-Hat — pink noise in an audible 4.8k-9.5k band: soft air, not
+    //    the old inaudible -17 dB whisper.
+    const hatBus = new Tone.Gain(0.55).connect(glue);
+    const hatLP = new Tone.Filter(9500, "lowpass").connect(hatBus);
+    const hatHP = new Tone.Filter(4800, "highpass").connect(hatLP);
     const hat = new Tone.NoiseSynth({
       noise: { type: "pink" },
-      envelope: { attack: 0.008, decay: 0.03, sustain: 0, release: 0.02 },
+      envelope: { attack: 0.001, decay: 0.045, sustain: 0, release: 0.02 },
     });
-    hat.volume.value = -17; hat.connect(hatHP);
+    hat.volume.value = -8; hat.connect(hatHP);
 
-    // 3. Bass — soft saw under a mellow lowpass; filter punch turned down
-    const bassFilter = new Tone.Filter(320, "lowpass").connect(limiter);
-    bassFilter.Q.value = 0.7;
+    // 3. Bass — sawtooth with a moving filter (120 -> ~900 Hz): the
+    //    harmonics carry the note on phone speakers even when the
+    //    fundamental can't. No more 320 Hz lid.
+    const bassLP = new Tone.Filter(1100, "lowpass").connect(glue);
+    bassLP.Q.value = 0.6;
     const bass = new Tone.MonoSynth({
       oscillator: { type: "sawtooth" },
-      envelope: { attack: 0.02, decay: 0.25, sustain: 0.45, release: 0.25 },
-      filterEnvelope: { attack: 0.06, decay: 0.25, sustain: 0.4, release: 0.3, baseFrequency: 70, octaves: 1.1 },
+      envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.2 },
+      filterEnvelope: { attack: 0.03, decay: 0.2, sustain: 0.55, release: 0.3,
+                        baseFrequency: 120, octaves: 3 },
     });
-    bass.volume.value = -10; bass.connect(bassFilter);
+    bass.volume.value = -5; bass.connect(bassLP);
 
-    // 4. Chords — warm FM "pillow" pad (no more detuned-saw buzz) + bigger reverb
-    const chordReverb = new Tone.Reverb({ decay: 3.6, preDelay: 0.03, wet: 0.5 }).connect(limiter);
-    const chordGain = new Tone.Gain(0.66);
-    chordGain.connect(limiter); chordGain.connect(chordReverb);
-    const chords = new Tone.PolySynth(Tone.FMSynth, {
-      maxPolyphony: 6,
-      harmonicity: 2, modulationIndex: 1.4,
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.16, decay: 0.5, sustain: 0.32, release: 1.4 },
-      modulation: { type: "triangle" },
-      modulationEnvelope: { attack: 0.12, decay: 0.4, sustain: 0.2, release: 0.6 },
+    // 4. Chords — fixed pool of four soft triangle voices (round-robin):
+    //    no PolySynth voice allocation, no FM modulators, no 3.6 s reverb
+    //    IR — the pad can never jam the audio thread on mobile.
+    const chordReverb = new Tone.Reverb({ decay: 1.9, preDelay: 0.02, wet: 0.28 }).connect(glue);
+    const chordGain = new Tone.Gain(0.8);
+    chordGain.connect(glue); chordGain.connect(chordReverb);
+    const chordVoices = [0, 1, 2, 3].map(d => {
+      const s = new Tone.Synth({
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.12, decay: 0.45, sustain: 0.4, release: 0.9 },
+      });
+      s.detune.value = (d - 1.5) * 4;   // spread for gentle warmth
+      s.volume.value = -12;
+      s.connect(chordGain);
+      return s;
     });
-    chords.volume.value = -20; chords.connect(chordGain);
+    let chIdx = 0;
+    const chords = {
+      triggerAttackRelease: (notes, dur, time, vel) => {
+        if (!time || time < Tone.now()) time = Tone.now() + 0.02;
+        const n = (notes && notes.length) ? notes : [notes];
+        n.forEach((note, i) => chordVoices[(chIdx + i) % chordVoices.length]
+          .triggerAttackRelease(note, dur, time, vel));
+        chIdx = (chIdx + n.length) % chordVoices.length;
+      },
+      triggerAttack: () => {},
+      releaseAll: () => chordVoices.forEach(s => { try { s.releaseAll(); } catch (e) {} }),
+    };
 
-    // 5. Lead — the SOOTHE chain: mellow triangle through a rounded lowpass,
-    //    a slow light vibrato for warmth, longer attack & release so notes
-    //    glide in instead of poking, and a darkened quarter-note echo that
-    //    sits behind the note like space rather than repetition.
-    /* Pass 3 (lead only): even rounder — LP 1.4k, slower deeper swell,
-       gentler vibrato, quieter overall, and the echo's wet mix finally set
-       to 0.35 (Tone defaults FeedbackDelay wet to 1.0 — the lead had been
-       running almost entirely through the delay tail: that was the residual
-       harshness Kirti kept hearing). */
-    const leadFilter = new Tone.Filter(1400, "lowpass");
-    leadFilter.Q.value = 0.4;
-    const leadVib = new Tone.Vibrato({ frequency: 3.2, depth: 0.045, type: "sine" });
-    const leadGain = new Tone.Gain(0.7);
-    leadGain.connect(limiter);
-    const echo = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.22, maxDelay: 1.2, wet: 0.35 });
-    const echoDamp = new Tone.Filter(1100, "lowpass");   // repeats are duller than the dry note
-    echo.connect(echoDamp); echoDamp.connect(limiter);
-    leadGain.connect(echo);
+    // 5. Lead — single clean path: triangle -> round lowpass -> light
+    //    vibrato -> darkened echo (30 % wet, inside the chain this time,
+    //    so there is no doubled dry signal).
+    const leadFilter = new Tone.Filter(2600, "lowpass");
+    leadFilter.Q.value = 0.35;
+    const leadVib = new Tone.Vibrato({ frequency: 4.2, depth: 0.03, type: "sine" });
+    const leadEcho = new Tone.FeedbackDelay({ delayTime: "4n", feedback: 0.2,
+                                              maxDelay: 1.2, wet: 0.3 });
+    const leadDamp = new Tone.Filter(2200, "lowpass");
+    leadEcho.connect(leadDamp); leadDamp.connect(glue);
     const lead = new Tone.Synth({
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.2, decay: 0.45, sustain: 0.45, release: 1.6 },
+      envelope: { attack: 0.1, decay: 0.4, sustain: 0.55, release: 1.1 },
     });
-    lead.volume.value = -16;
-    lead.chain(leadFilter, leadVib, leadGain);
+    lead.volume.value = -7;
+    lead.chain(leadFilter, leadVib, leadEcho);
 
     this.synth = { kick, hat, bass, chords, lead };
-    /* NOTE: do NOT resetFlags() here. build() runs lazily inside ensure(),
-       which can happen *after* selectLibraryTrack() has already armed all
-       5 layers on a fresh page: wiping the flags made "Play full beat" a
-       silent phantom playback (transport ran, nothing audible). Fresh
-       state is already the { } defaults, which read as "off". */
     this.built = true;
     if (!this._watchdog) this._watchdog = setInterval(() => this.tick(), 900);
+  },
+
+  /* Round 8: user-controlled master level (volume slider). */
+  setMasterVolume(pct) {
+    const p = Math.max(0, Math.min(100, pct | 0));
+    if (this.master) { try { this.master.gain.rampTo(0.95 * p / 100, 0.08); } catch (e) {} }
+    return p;
   },
 
   audible(layerKey) {
@@ -441,30 +462,34 @@ const Audio = {
         this.step = (this.step + 1) % 16; s = this.step;
       }
       this._lastStep = s;
+      /* Round 8: after a tab-suspend/resume the scheduler can fire its
+         whole backlog at once — the audible "stuck/burst". Events more than
+         250 ms stale are dropped instead of piled onto the present. */
+      if (time < Tone.now() - 0.25) return;
       const t = this.track;
       if (!t) return;
 
       if (this.audible("kick") && LAYER_HITS.kick.has(s)) {
-        this.synth.kick.triggerAttackRelease("C1", "8n", time, 0.8);
+        this.synth.kick.triggerAttackRelease("C1", "8n", time, 0.95);
         this.pulse("kick", time);
       }
       if (this.audible("hat")) {
         if (LAYER_HITS.hat.has(s)) {
-          this.synth.hat.triggerAttackRelease("16n", time, 0.55);
+          this.synth.hat.triggerAttackRelease("16n", time, 0.8);
           this.pulse("hat", time);
         }
       }
       if (this.audible("bass")) {
         const hit = t.bass.find(h => h[0] === s);
-        if (hit) { this.synth.bass.triggerAttackRelease(hit[1], hit[2] || "16n", time, 0.8); this.pulse("bass", time); }
+        if (hit) { this.synth.bass.triggerAttackRelease(hit[1], hit[2] || "16n", time, 0.9); this.pulse("bass", time); }
       }
       if (this.audible("chords")) {
         const hit = t.chords.find(h => h[0] === s);
-        if (hit) { this.synth.chords.triggerAttackRelease(hit[1], hit[2] || "2n", time, 0.65); this.pulse("chords", time); }
+        if (hit) { this.synth.chords.triggerAttackRelease(hit[1], hit[2] || "2n", time, 0.85); this.pulse("chords", time); }
       }
       if (this.audible("lead")) {
         const hit = t.lead.find(h => h[0] === s);
-        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.5); this.pulse("lead", time); }
+        if (hit) { this.synth.lead.triggerAttackRelease(hit[1], hit[2] || "8n", time, 0.75); this.pulse("lead", time); }
       }
     }, "16n");
 
@@ -539,6 +564,7 @@ const el = {
   streakLine: $("#streakLine"), cassetteDay: $("#cassetteDay"), confetti: $("#confetti"),
   btnKeepListening: $("#btnKeepListening"), btnOpenLibraryDone: $("#btnOpenLibraryDone"),
   btnTransport: $("#btnTransport"), tIcon: $("#tIcon"), tLabel: $("#tLabel"),
+  volSlider: $("#volSlider"),
   btnPracticeAgain: $("#btnPracticeAgain"), toast: $("#toast"),
   /* 7-day-streak anime bonus beat */
   btnBonusOpen: $("#btnBonusOpen"),
@@ -1064,6 +1090,13 @@ el.btnCloseLibrary.addEventListener("click", () => { hide(el.libraryModal); });
 el.btnPlayerPlay.addEventListener("click", playerPlay);
 el.btnPlayerStop.addEventListener("click", playerStop);
 el.btnTransport.addEventListener("click", toggleTransport);
+/* Round 8: master volume slider (persisted) */
+el.volSlider.value = (typeof state.vol === "number" ? state.vol : 90);
+el.volSlider.addEventListener("input", () => {
+  state.vol = Math.max(0, Math.min(100, el.volSlider.value | 0));
+  Audio.setMasterVolume(state.vol);
+  saveState();
+});
 
 el.btnKeepListening.addEventListener("click", () => { hide(el.completeModal); toast("Beat saved to your Mixtape Library \uD83C\uDF9F"); });
 el.btnOpenLibraryDone.addEventListener("click", () => {

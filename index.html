@@ -59,9 +59,15 @@
           <h2 class="track-title" id="trackTitle">—</h2>
           <p class="track-meta" id="trackMeta">—</p>
         </div>
-        <button class="btn btn-transport" id="btnTransport" aria-pressed="false">
-          <span class="t-icon" id="tIcon">&#9632;</span><span id="tLabel">Stop</span>
-        </button>
+        <div class="stage-actions">
+          <button class="btn btn-transport" id="btnTransport" aria-pressed="false">
+            <span class="t-icon" id="tIcon">&#9632;</span><span id="tLabel">Stop</span>
+          </button>
+          <label class="vol-wrap" title="Master volume">
+            <span class="vol-ico">&#128266;</span>
+            <input type="range" id="volSlider" min="0" max="100" step="1" value="90" aria-label="Master volume">
+          </label>
+        </div>
       </div>
 
       <div class="visualizer" id="visualizer" aria-label="Layer visualizer"></div>
